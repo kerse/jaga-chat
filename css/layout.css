@@ -1,0 +1,68 @@
+/* === App Container & View System === */
+
+.app-container {
+  width: 100%;
+  max-width: 430px;
+  height: 100%;
+  background: var(--bg-app);
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 0 50px rgba(0, 0, 0, 0.08);
+}
+
+/* --- View stack (absolute-positioned screens) --- */
+
+.view {
+  position: absolute;
+  inset: 0;
+  background: var(--bg-app);
+  display: flex;
+  flex-direction: column;
+  z-index: 10;
+  padding-top: max(14px, var(--safe-top));
+  will-change: transform, opacity;
+}
+
+/* --- Bottom Tab Bar (Section 6.1) --- */
+
+.tabbar {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: calc(64px + var(--safe-bottom));
+  background: rgba(255, 255, 255, 0.94);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-top: 1px solid var(--border-light);
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-around;
+  padding-top: 10px;
+  padding-bottom: var(--safe-bottom);
+  z-index: 30;
+}
+
+.tab-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  background: none;
+  border: none;
+  color: var(--text-light);
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 500;
+  width: 70px;
+  padding: 0;
+}
+
+.tab-item.active {
+  color: var(--blue);
+}
+
+.tab-item svg {
+  width: 22px;
+  height: 22px;
+}

@@ -1,0 +1,56 @@
+/* === Reset & CSS Custom Properties === */
+:root {
+  --bg-app: #f7f8fa;
+  --bg-card: #ffffff;
+  --text-main: #0f172a;
+  --text-secondary: #475569;
+  --text-muted: #64748b;
+  --text-light: #94a3b8;
+  --blue: #2563eb;
+  --blue-hover: #1d4ed8;
+  --blue-bg: #e0f2fe;
+  --blue-text: #0284c7;
+  --pill-bg: #eceef1;
+  --border-light: rgba(0, 0, 0, 0.05);
+  --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.02);
+  --radius-card: 20px;
+  --radius-bubble: 18px;
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+* {
+  -webkit-tap-highlight-color: transparent;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  background: var(--bg-app);
+  color: var(--text-main);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+}
+
+input, textarea, button {
+  font-family: inherit;
+}
+
+input {
+  -webkit-user-select: text;
+  user-select: text;
+}
