@@ -1,0 +1,201 @@
+/* === Telegram-style Folders/Tabs and Avatar Rail Modes === */
+
+/* --- Mode Switcher Scrollable Enhancement --- */
+
+.mode-switcher {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.mode-switcher::-webkit-scrollbar {
+  display: none;
+}
+
+.mode-btn {
+  white-space: nowrap;
+  flex: 1 0 auto;
+}
+
+/* -------------------------------------------------------
+   1. Telegram-style Folders / Tabs (.folder-tabs)
+   ------------------------------------------------------- */
+
+.folder-tabs-wrap {
+  padding: 4px 16px 8px 16px;
+  flex-shrink: 0;
+}
+
+.folder-tabs {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  padding: 2px 0;
+}
+
+.folder-tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.folder-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 13px;
+  background: #ffffff;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.16s ease;
+  user-select: none;
+}
+
+.folder-tab:active {
+  transform: scale(0.96);
+}
+
+.folder-tab.active {
+  background: var(--blue);
+  border-color: var(--blue);
+  color: #ffffff;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.25);
+}
+
+.folder-tab-badge {
+  font-size: 10.5px;
+  font-weight: 700;
+  background: #e0f2fe;
+  color: #0284c7;
+  padding: 0 6px;
+  height: 18px;
+  border-radius: 9999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.folder-tab.active .folder-tab-badge {
+  background: rgba(255, 255, 255, 0.25);
+  color: #ffffff;
+}
+
+/* Guru tag on channel card in "All" tab */
+.channel-guru-tag {
+  font-size: 10px;
+  font-weight: 700;
+  color: #4f46e5;
+  background: #eef2ff;
+  padding: 1px 6px;
+  border-radius: 5px;
+  display: inline-block;
+  margin-bottom: 2px;
+  width: fit-content;
+  letter-spacing: 0.2px;
+}
+
+/* -------------------------------------------------------
+   2. Avatar / Stories Rail (.avatar-rail)
+   ------------------------------------------------------- */
+
+.avatar-rail-wrap {
+  padding: 4px 16px 10px 16px;
+  flex-shrink: 0;
+}
+
+.avatar-rail {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  padding: 3px 2px;
+}
+
+.avatar-rail::-webkit-scrollbar {
+  display: none;
+}
+
+.avatar-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+  flex-shrink: 0;
+  width: 58px;
+  user-select: none;
+}
+
+.avatar-circle-wrap {
+  position: relative;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  padding: 2.5px;
+  background: #e2e8f0;
+  transition: all 0.18s ease;
+}
+
+.avatar-item.active .avatar-circle-wrap {
+  background: linear-gradient(135deg, #2563eb 0%, #8b5cf6 100%);
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.28);
+}
+
+.avatar-circle {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: #ffffff;
+  border: 2px solid #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 23px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  transition: transform 0.12s ease;
+}
+
+.avatar-item:active .avatar-circle {
+  transform: scale(0.92);
+}
+
+.avatar-badge {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  background: var(--blue);
+  color: #ffffff;
+  font-size: 10px;
+  font-weight: 700;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  border-radius: 9999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #f7f8fa;
+}
+
+.avatar-name {
+  font-size: 10.5px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  width: 100%;
+  transition: color 0.14s ease;
+}
+
+.avatar-item.active .avatar-name {
+  color: var(--blue);
+  font-weight: 700;
+}

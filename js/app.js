@@ -2,7 +2,7 @@
 /* Depends on: data.js, state.js, render.js, animations.js */
 
 /* -------------------------------------------------------
-   View Mode Switching (Spaces vs Accordion)
+   View Mode Switching (4 Navigation Modes)
    ------------------------------------------------------- */
 
 function setViewMode(mode) {
@@ -20,6 +20,68 @@ function setViewMode(mode) {
 function toggleSpaceAccordion(spaceId) {
   collapsedSpaces[spaceId] = !collapsedSpaces[spaceId];
   renderAccordionView();
+}
+
+function selectFolderTab(tabId) {
+  if (activeTabId === tabId) return;
+  activeTabId = tabId;
+  animateChannelSwitch(function() {
+    renderTabsMode();
+  });
+}
+
+function selectStoryAvatar(spaceId) {
+  if (activeAvatarId === spaceId) return;
+  activeAvatarId = spaceId;
+  animateChannelSwitch(function() {
+    renderStoriesMode();
+  });
+}
+
+/* -------------------------------------------------------
+   Touch Swipe Gesture Handler for Tabs Mode
+   ------------------------------------------------------- */
+
+var touchStartX = 0;
+var touchStartY = 0;
+var touchEndX = 0;
+var touchEndY = 0;
+
+function setupSwipeGestures() {
+  var container = document.getElementById('channelsListContainer');
+  if (!container) return;
+
+  container.addEventListener('touchstart', function(e) {
+    if (currentViewMode !== 'tabs') return;
+    touchStartX = e.changedTouches[0].screenX;
+    touchStartY = e.changedTouches[0].screenY;
+  }, { passive: true });
+
+  container.addEventListener('touchend', function(e) {
+    if (currentViewMode !== 'tabs') return;
+    touchEndX = e.changedTouches[0].screenX;
+    touchEndY = e.changedTouches[0].screenY;
+    handleSwipeGesture();
+  }, { passive: true });
+}
+
+function handleSwipeGesture() {
+  var deltaX = touchEndX - touchStartX;
+  var deltaY = touchEndY - touchStartY;
+
+  // Ensure horizontal swipe
+  if (Math.abs(deltaX) > 50 && Math.abs(deltaY) < 40) {
+    var tabsList = ['all'].concat(SPACES_DATA.map(function(s) { return s.id; }));
+    var currentIndex = tabsList.indexOf(activeTabId);
+
+    if (deltaX < 0 && currentIndex < tabsList.length - 1) {
+      // Swiped Left -> Next tab
+      selectFolderTab(tabsList[currentIndex + 1]);
+    } else if (deltaX > 0 && currentIndex > 0) {
+      // Swiped Right -> Prev tab
+      selectFolderTab(tabsList[currentIndex - 1]);
+    }
+  }
 }
 
 /* -------------------------------------------------------
@@ -45,7 +107,6 @@ function selectSpace(spaceId) {
   currentSpaceId = spaceId;
   closeSpaceSheet();
 
-  // Section 8: channel list crossfade on space switch
   animateChannelSwitch(function() {
     renderApp();
   });
@@ -75,7 +136,7 @@ function openChat(channelId) {
   // Render messages
   renderChatMessages(channel);
 
-  // Section 8: horizontal slide transition, 200ms
+  // Push transition
   document.getElementById('chatView').classList.remove('hidden-right');
   document.getElementById('channelsView').classList.add('slide-left');
 
@@ -85,7 +146,7 @@ function openChat(channelId) {
     if (area) area.scrollTop = area.scrollHeight;
   }, 50);
 
-  // Section 11: trigger demo scenario when in Бхакти-санга (Бхакти Вигьяна Госвами)
+  // Trigger demo scenario
   scheduleDemoMessage();
 }
 
@@ -94,7 +155,6 @@ function closeChat() {
   document.getElementById('channelsView').classList.remove('slide-left');
   currentChannelId = null;
 
-  // Cancel pending demo timer if navigating away
   if (demoTimer) {
     clearTimeout(demoTimer);
     demoTimer = null;
@@ -129,7 +189,6 @@ function sendChatMessage() {
     now.getHours().toString().padStart(2, '0') + ':' +
     now.getMinutes().toString().padStart(2, '0');
 
-  // Add message to data
   channel.messages.push({
     sender: 'Вы',
     time: timeStr,
@@ -137,16 +196,13 @@ function sendChatMessage() {
     isOutgoing: true
   });
 
-  // Update channel preview
   channel.lastSender = 'Вы';
   channel.lastText = text;
   channel.time = timeStr;
 
-  // Clear input and re-render
   input.value = '';
   renderChatMessages(channel);
 
-  // Scroll to bottom
   var area = document.getElementById('messagesArea');
   if (area) area.scrollTop = area.scrollHeight;
 }
@@ -157,8 +213,6 @@ function toggleAudioPlay(btn) {
 
 /* -------------------------------------------------------
    Demo Scenario (Section 11, Steps 7-8)
-   Simulates new message in Говардхан → Киртан
-   while user is viewing a Бхакти-санга chat.
    ------------------------------------------------------- */
 
 function scheduleDemoMessage() {
@@ -169,28 +223,24 @@ function scheduleDemoMessage() {
     demoTriggered = true;
     demoTimer = null;
 
-    // Find Говардхан → Киртан
     var result = findChannelGlobally('gov_kirtan');
     if (!result) return;
 
     var kirtan = result.channel;
 
-    // Add a new mock message
     kirtan.messages.push({
       sender: 'Гаура Даси',
       time: '11:05',
       text: 'Какой красивый киртан! Послушала, и сердце радуется 🙏'
     });
 
-    // Bump unread
     kirtan.unread += 1;
     kirtan.lastSender = 'Гаура Даси';
     kirtan.lastText = 'Какой красивый киртан! Послушала, и сердце радуется 🙏';
     kirtan.time = '11:05';
 
-    // Update external badge with animation
     var badge = document.getElementById('externalBadge');
-    var unreadCount = (currentViewMode === 'accordion') ? getTotalUnreadCount() : getExternalUnreadCount();
+    var unreadCount = (currentViewMode === 'spaces') ? getExternalUnreadCount() : getTotalUnreadCount();
     if (unreadCount > 0 && badge) {
       badge.style.display = 'flex';
       badge.textContent = unreadCount;
@@ -206,10 +256,11 @@ function scheduleDemoMessage() {
 window.addEventListener('DOMContentLoaded', function() {
   try {
     var savedMode = localStorage.getItem('jaga_view_mode');
-    if (savedMode === 'spaces' || savedMode === 'accordion') {
+    if (['spaces', 'accordion', 'tabs', 'stories'].indexOf(savedMode) !== -1) {
       currentViewMode = savedMode;
     }
   } catch (e) {}
 
   renderApp();
+  setupSwipeGestures();
 });

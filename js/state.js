@@ -5,9 +5,15 @@ var currentChannelId = null;
 var demoTriggered = false;
 var demoTimer = null;
 
-// View Mode: 'spaces' (classic with bottom sheet) | 'accordion' (unified list)
+// View Mode: 'spaces' | 'accordion' | 'tabs' | 'stories'
 var currentViewMode = 'accordion';
 var collapsedSpaces = {}; // spaceId -> boolean (true = collapsed)
+
+// State for Tabs mode ('all' or spaceId)
+var activeTabId = 'all';
+
+// State for Stories mode (spaceId)
+var activeAvatarId = 'general';
 
 function getCurrentSpace() {
   return SPACES_DATA.find(function(s) { return s.id === currentSpaceId; }) || SPACES_DATA[0];
