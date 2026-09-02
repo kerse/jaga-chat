@@ -1,52 +1,62 @@
 /* === Accordion View Mode & Mode Switcher === */
 
-/* --- Mode Switcher (Segmented Control) --- */
+/* --- Mode Switcher (Compact Top Segmented Control) --- */
 
 .mode-switcher-wrap {
-  padding: 8px 16px 4px 16px;
+  padding: 4px 14px 4px 14px;
   flex-shrink: 0;
+  display: flex;
+  justify-content: center;
 }
 
 .mode-switcher {
-  background: var(--pill-bg);
-  padding: 3px;
-  border-radius: 13px;
-  display: flex;
-  gap: 3px;
-  border: 1px solid rgba(0, 0, 0, 0.03);
+  background: #e9ecef;
+  padding: 2.5px;
+  border-radius: 9999px;
+  display: inline-flex;
+  gap: 2px;
+  max-width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.mode-switcher::-webkit-scrollbar {
+  display: none;
 }
 
 .mode-btn {
-  flex: 1;
   border: none;
   background: transparent;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 600;
   color: var(--text-muted);
-  border-radius: 10px;
-  padding: 7px 10px;
+  border-radius: 9999px;
+  padding: 5px 9px;
   cursor: pointer;
-  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
-  display: flex;
+  transition: all 0.16s ease;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
+  gap: 4px;
+  white-space: nowrap;
+  flex: 0 0 auto;
 }
 
 .mode-btn svg {
-  width: 15px;
-  height: 15px;
+  width: 13px;
+  height: 13px;
   stroke-width: 2.2;
 }
 
 .mode-btn:active {
-  transform: scale(0.98);
+  transform: scale(0.96);
 }
 
 .mode-btn.active {
   background: #ffffff;
   color: var(--text-main);
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
   font-weight: 700;
 }
 

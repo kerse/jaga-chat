@@ -21,7 +21,7 @@ function renderApp() {
 }
 
 /**
- * Render Mode Switcher (4 Navigation Modes).
+ * Render Mode Switcher (Compact Top Segmented Control).
  */
 function renderModeSwitcher() {
   var container = document.getElementById('modeSwitcherContainer');
@@ -66,13 +66,9 @@ function renderSpacesMode() {
       '</svg>';
   }
 
+  // Right icon button is active ONLY in spaces mode
   var iconBtn = document.getElementById('spaceIconBtn');
   if (iconBtn) iconBtn.style.display = 'flex';
-
-  var infoWrap = document.querySelector('.info-banner-wrap');
-  if (infoWrap) infoWrap.style.display = 'block';
-  document.getElementById('infoPillText').textContent =
-    'Вы просматриваете каналы пространства «' + space.name + '»';
 
   var sectionTitle = document.querySelector('.section-title');
   if (sectionTitle) {
@@ -102,22 +98,9 @@ function renderAccordionMode() {
     titleBtn.innerHTML = '<span id="currentSpaceName">JAGA.CHAT</span>';
   }
 
+  // Hide space switcher icon in accordion mode
   var iconBtn = document.getElementById('spaceIconBtn');
-  if (iconBtn) iconBtn.style.display = 'flex';
-
-  var totalUnread = getTotalUnreadCount();
-  var badge = document.getElementById('externalBadge');
-  if (totalUnread > 0) {
-    badge.style.display = 'flex';
-    badge.textContent = totalUnread;
-  } else {
-    badge.style.display = 'none';
-  }
-
-  var infoWrap = document.querySelector('.info-banner-wrap');
-  if (infoWrap) infoWrap.style.display = 'block';
-  document.getElementById('infoPillText').textContent =
-    'Все пространства и каналы в одном месте';
+  if (iconBtn) iconBtn.style.display = 'none';
 
   var sectionTitle = document.querySelector('.section-title');
   if (sectionTitle) sectionTitle.style.display = 'none';
@@ -135,24 +118,14 @@ function renderTabsMode() {
     titleBtn.innerHTML = '<span id="currentSpaceName">JAGA.CHAT</span>';
   }
 
-  var totalUnread = getTotalUnreadCount();
-  var badge = document.getElementById('externalBadge');
-  if (totalUnread > 0) {
-    badge.style.display = 'flex';
-    badge.textContent = totalUnread;
-  } else {
-    badge.style.display = 'none';
-  }
-
-  // Info pill with swipe hint
-  var infoWrap = document.querySelector('.info-banner-wrap');
-  if (infoWrap) infoWrap.style.display = 'block';
-  document.getElementById('infoPillText').textContent =
-    'Свайпайте экран влево/вправо для смены папок';
+  // Hide space switcher icon in tabs mode
+  var iconBtn = document.getElementById('spaceIconBtn');
+  if (iconBtn) iconBtn.style.display = 'none';
 
   var sectionTitle = document.querySelector('.section-title');
   if (sectionTitle) sectionTitle.style.display = 'none';
 
+  var totalUnread = getTotalUnreadCount();
   var container = document.getElementById('channelsListContainer');
   container.innerHTML = '';
 
@@ -197,7 +170,6 @@ function renderTabsMode() {
   contentDiv.style.gap = '10px';
 
   if (activeTabId === 'all') {
-    // Render all channels from all spaces with Guru tags
     SPACES_DATA.forEach(function(sp) {
       sp.channels.forEach(function(ch) {
         var card = document.createElement('div');
@@ -264,19 +236,9 @@ function renderStoriesMode() {
     titleBtn.innerHTML = '<span id="currentSpaceName">JAGA.CHAT</span>';
   }
 
-  var totalUnread = getTotalUnreadCount();
-  var badge = document.getElementById('externalBadge');
-  if (totalUnread > 0) {
-    badge.style.display = 'flex';
-    badge.textContent = totalUnread;
-  } else {
-    badge.style.display = 'none';
-  }
-
-  var infoWrap = document.querySelector('.info-banner-wrap');
-  if (infoWrap) infoWrap.style.display = 'block';
-  document.getElementById('infoPillText').textContent =
-    'Нажмите на аватар учителя для мгновенной фильтрации';
+  // Hide space switcher icon in stories mode
+  var iconBtn = document.getElementById('spaceIconBtn');
+  if (iconBtn) iconBtn.style.display = 'none';
 
   var sectionTitle = document.querySelector('.section-title');
   if (sectionTitle) sectionTitle.style.display = 'none';
