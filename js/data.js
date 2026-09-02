@@ -41,8 +41,8 @@ var SPACES_DATA = [
         iconBg: '#DCFCE7',
         iconColor: '#16A34A',
         lastSender: 'Мадхава дас',
-        lastText: 'Кто-нибудь знает, где можно найти русский перевод комментариев Вишванатхи Чакраварти?',
-        time: '09:18',
+        lastText: 'Буду очень признателен 🙏',
+        time: '09:28',
         unread: 0,
         messages: [
           { sender: 'Мадхава дас', time: '09:18', text: 'Кто-нибудь знает, где можно найти русский перевод комментариев Вишванатхи Чакраварти?' },
@@ -57,7 +57,7 @@ var SPACES_DATA = [
         iconBg: '#F3E8FF',
         iconColor: '#9333EA',
         lastSender: 'Гопал дас',
-        lastText: 'Харе Кришна! Кто завтра едет в храм утром?',
+        lastText: 'Отлично, напиши мне в личку номер.',
         time: 'вчера',
         unread: 4,
         messages: [
@@ -135,7 +135,7 @@ var SPACES_DATA = [
         iconBg: '#FFE4E6',
         iconColor: '#E11D48',
         lastSender: 'Рагхунатха дас',
-        lastText: 'На субботу ещё нужны два человека помочь с подготовкой зала.',
+        lastText: 'Отлично! Нужен еще один помощник.',
         time: 'вчера',
         unread: 2,
         messages: [
@@ -161,7 +161,7 @@ var SPACES_DATA = [
         iconBg: '#DCFCE7',
         iconColor: '#16A34A',
         lastSender: 'Шьям дас',
-        lastText: 'Послушайте запись вчерашнего киртана. Последние десять минут очень сильные.',
+        lastText: 'Послушайте последние десять минут, очень сильные.',
         time: '11:03',
         unread: 3,
         messages: [
@@ -260,7 +260,7 @@ var SPACES_DATA = [
         iconBg: '#DCFCE7',
         iconColor: '#16A34A',
         lastSender: 'Мира',
-        lastText: 'А чем джапа принципиально отличается от киртана?',
+        lastText: 'Теперь понятно, спасибо.',
         time: 'вчера',
         unread: 0,
         messages: [
@@ -287,9 +287,9 @@ var SPACES_DATA = [
         iconType: 'newspaper',
         iconBg: '#E0F2FE',
         iconColor: '#0284C7',
-        lastSender: 'Бхакта Дмитрий',
-        lastText: 'Новый тираж «Шримад-Бхагаватам» уже на складе!',
-        time: '12:10',
+        lastSender: 'Мадхава дас',
+        lastText: 'Отличная новость! Сколько комплектов прибыло?',
+        time: '12:15',
         unread: 2,
         messages: [
           { sender: 'Бхакта Дмитрий', time: '12:10', text: 'Новый тираж «Шримад-Бхагаватам» уже на складе!' },

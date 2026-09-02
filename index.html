@@ -34,13 +34,10 @@
 
       <!-- Header: space title + icon button -->
       <div class="header">
-        <button class="space-title-btn" id="spaceTitleBtn" onclick="openSpaceSheet()">
-          <span id="currentSpaceName">JAGA Хаб</span>
-          <svg viewBox="0 0 24 24" fill="none">
-            <path d="M6 9l6 6 6-6" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"/>
-          </svg>
+        <button class="space-title-btn" id="spaceTitleBtn">
+          <span id="currentSpaceName">JAGA.CHAT</span>
         </button>
-        <button class="space-icon-btn" id="spaceIconBtn" onclick="openSpaceSheet()" aria-label="Выбрать пространство">
+        <button class="space-icon-btn" id="spaceIconBtn" style="display:none" onclick="openSpaceSheet()" aria-label="Выбрать пространство">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
             <rect x="4" y="2" width="16" height="20" rx="2.5"/>
             <path d="M9 22v-4h6v4"/>
@@ -50,8 +47,11 @@
         </button>
       </div>
 
+      <!-- Sticky navigation area for Tabs / Avatar Rail (rendered by JS) -->
+      <div id="modeNavContainer"></div>
+
       <!-- Section title (shown in Spaces mode) -->
-      <div class="section-title">Каналы</div>
+      <div class="section-title" style="display:none">Каналы</div>
 
       <!-- Channel cards / Accordion container -->
       <div class="channels-scroll" id="channelsListContainer"></div>
@@ -118,7 +118,7 @@
                class="chat-input-field"
                id="chatInput"
                placeholder="Сообщение..."
-               onkeypress="handleInputKey(event)">
+               onkeydown="handleInputKey(event)">
         <button class="send-msg-btn" onclick="sendChatMessage()">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
             <line x1="22" y1="2" x2="11" y2="13"/>

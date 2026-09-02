@@ -17,24 +17,65 @@ function setViewMode(mode) {
   });
 }
 
+/**
+ * Accordion toggle: CSS-only collapse/expand without full re-render.
+ * Preserves scroll position and enables chevron transition.
+ */
 function toggleSpaceAccordion(spaceId) {
   collapsedSpaces[spaceId] = !collapsedSpaces[spaceId];
-  renderAccordionView();
+
+  var section = document.querySelector('.accordion-section[data-space-id="' + spaceId + '"]');
+  if (section) {
+    section.classList.toggle('collapsed', collapsedSpaces[spaceId]);
+  }
 }
 
 function selectFolderTab(tabId) {
   if (activeTabId === tabId) return;
   activeTabId = tabId;
+
+  // Only crossfade the channel list, not the sticky tabs bar
   animateChannelSwitch(function() {
-    renderTabsMode();
+    renderTabsContent();
   });
+
+  // Update tabs bar visuals without full re-render
+  var tabs = document.querySelectorAll('.folder-tab');
+  var tabsList = ['all'].concat(SPACES_DATA.map(function(s) { return s.id; }));
+  tabs.forEach(function(tab, i) {
+    tab.classList.toggle('active', tabsList[i] === tabId);
+  });
+
+  // Scroll active tab into view
+  var activetab = document.querySelector('.folder-tab.active');
+  if (activetab) activetab.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
 }
 
 function selectStoryAvatar(spaceId) {
   if (activeAvatarId === spaceId) return;
   activeAvatarId = spaceId;
+
+  // Only crossfade the channel list, not the sticky avatar rail
   animateChannelSwitch(function() {
-    renderStoriesMode();
+    var currentAvatarSpace = SPACES_DATA.find(function(s) { return s.id === activeAvatarId; }) || SPACES_DATA[0];
+    var container = document.getElementById('channelsListContainer');
+    container.innerHTML = '';
+    currentAvatarSpace.channels.forEach(function(ch) {
+      container.appendChild(createChannelCard(ch, null));
+    });
+  });
+
+  // Update avatar visuals without full re-render
+  var avatars = document.querySelectorAll('.avatar-item');
+  avatars.forEach(function(av) {
+    av.classList.remove('active');
+  });
+  // Find and activate the right one
+  SPACES_DATA.forEach(function(sp, i) {
+    if (sp.id === spaceId && avatars[i]) {
+      avatars[i].classList.add('active');
+      avatars[i].scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+    }
   });
 }
 
@@ -44,8 +85,7 @@ function selectStoryAvatar(spaceId) {
 
 var touchStartX = 0;
 var touchStartY = 0;
-var touchEndX = 0;
-var touchEndY = 0;
+var touchSwipeTarget = null;
 
 function setupSwipeGestures() {
   var container = document.getElementById('channelsListContainer');
@@ -53,35 +93,38 @@ function setupSwipeGestures() {
 
   container.addEventListener('touchstart', function(e) {
     if (currentViewMode !== 'tabs') return;
+
+    // Don't intercept swipes on the folder tabs bar itself
+    var target = e.target;
+    while (target && target !== container) {
+      if (target.classList && target.classList.contains('folder-tabs')) return;
+      target = target.parentElement;
+    }
+
     touchStartX = e.changedTouches[0].screenX;
     touchStartY = e.changedTouches[0].screenY;
+    touchSwipeTarget = container;
   }, { passive: true });
 
   container.addEventListener('touchend', function(e) {
-    if (currentViewMode !== 'tabs') return;
-    touchEndX = e.changedTouches[0].screenX;
-    touchEndY = e.changedTouches[0].screenY;
-    handleSwipeGesture();
-  }, { passive: true });
-}
+    if (currentViewMode !== 'tabs' || !touchSwipeTarget) return;
+    touchSwipeTarget = null;
 
-function handleSwipeGesture() {
-  var deltaX = touchEndX - touchStartX;
-  var deltaY = touchEndY - touchStartY;
+    var deltaX = e.changedTouches[0].screenX - touchStartX;
+    var deltaY = e.changedTouches[0].screenY - touchStartY;
 
-  // Ensure horizontal swipe
-  if (Math.abs(deltaX) > 50 && Math.abs(deltaY) < 40) {
-    var tabsList = ['all'].concat(SPACES_DATA.map(function(s) { return s.id; }));
-    var currentIndex = tabsList.indexOf(activeTabId);
+    // Must be a clear horizontal swipe (not vertical scroll)
+    if (Math.abs(deltaX) > 60 && Math.abs(deltaY) < 40) {
+      var tabsList = ['all'].concat(SPACES_DATA.map(function(s) { return s.id; }));
+      var currentIndex = tabsList.indexOf(activeTabId);
 
-    if (deltaX < 0 && currentIndex < tabsList.length - 1) {
-      // Swiped Left -> Next tab
-      selectFolderTab(tabsList[currentIndex + 1]);
-    } else if (deltaX > 0 && currentIndex > 0) {
-      // Swiped Right -> Prev tab
-      selectFolderTab(tabsList[currentIndex - 1]);
+      if (deltaX < 0 && currentIndex < tabsList.length - 1) {
+        selectFolderTab(tabsList[currentIndex + 1]);
+      } else if (deltaX > 0 && currentIndex > 0) {
+        selectFolderTab(tabsList[currentIndex - 1]);
+      }
     }
-  }
+  }, { passive: true });
 }
 
 /* -------------------------------------------------------
@@ -123,11 +166,14 @@ function openChat(channelId) {
 
   var space = lookup.space;
   var channel = lookup.channel;
-  currentSpaceId = space.id;
+
+  // Only update currentSpaceId in Spaces mode (avoid cross-mode state pollution)
+  if (currentViewMode === 'spaces') {
+    currentSpaceId = space.id;
+  }
 
   // Clear unread for this channel
   channel.unread = 0;
-  renderApp();
 
   // Set chat header
   document.getElementById('chatHeaderTitle').textContent = channel.name;
@@ -160,6 +206,7 @@ function closeChat() {
     demoTimer = null;
   }
 
+  // Re-render to update unread badges after reading a channel
   renderApp();
 }
 
@@ -169,6 +216,7 @@ function closeChat() {
 
 function handleInputKey(e) {
   if (e.key === 'Enter') {
+    e.preventDefault();
     sendChatMessage();
   }
 }
@@ -213,11 +261,16 @@ function toggleAudioPlay(btn) {
 
 /* -------------------------------------------------------
    Demo Scenario (Section 11, Steps 7-8)
+   Simulates new message in Говардхан → Киртан
+   while user is viewing a Бхакти-санга chat.
    ------------------------------------------------------- */
 
 function scheduleDemoMessage() {
   if (demoTriggered) return;
-  if (currentSpaceId !== 'bhakti') return;
+
+  // Check if the opened channel belongs to the Bhakti space
+  var lookup = currentChannelId ? findChannelGlobally(currentChannelId) : null;
+  if (!lookup || lookup.space.id !== 'bhakti') return;
 
   demoTimer = setTimeout(function() {
     demoTriggered = true;
@@ -239,13 +292,15 @@ function scheduleDemoMessage() {
     kirtan.lastText = 'Какой красивый киртан! Послушала, и сердце радуется 🙏';
     kirtan.time = '11:05';
 
-    var badge = document.getElementById('externalBadge');
-    var unreadCount = (currentViewMode === 'spaces') ? getExternalUnreadCount() : getTotalUnreadCount();
-    if (unreadCount > 0 && badge) {
-      badge.style.display = 'flex';
-      badge.textContent = unreadCount;
-      pulseBadge(badge);
+    // If user currently has gov_kirtan open, append the message live
+    if (currentChannelId === 'gov_kirtan') {
+      renderChatMessages(kirtan);
+      var area = document.getElementById('messagesArea');
+      if (area) area.scrollTop = area.scrollHeight;
     }
+
+    // Re-render the background channel list to update badges
+    renderApp();
   }, 4000);
 }
 

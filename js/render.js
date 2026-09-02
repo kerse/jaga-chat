@@ -6,6 +6,10 @@
 function renderApp() {
   renderModeSwitcher();
 
+  // Clear sticky nav area (Tabs/Avatar Rail go here, not in scroll container)
+  var navContainer = document.getElementById('modeNavContainer');
+  if (navContainer) navContainer.innerHTML = '';
+
   if (currentViewMode === 'accordion') {
     renderAccordionMode();
   } else if (currentViewMode === 'tabs') {
@@ -16,7 +20,7 @@ function renderApp() {
     renderSpacesMode();
   }
 
-  // Bottom sheet sync
+  // Bottom sheet sync (always keep in sync regardless of mode)
   renderSpaceList();
 }
 
@@ -50,25 +54,44 @@ function renderModeSwitcher() {
   container.innerHTML = html;
 }
 
-/**
- * Render Mode 1: Classic Isolated Spaces with Bottom Sheet.
- */
-function renderSpacesMode() {
-  var space = getCurrentSpace();
+/* -------------------------------------------------------
+   Shared Header Helpers
+   ------------------------------------------------------- */
 
+function setHeaderSpacesMode(space) {
   var titleBtn = document.getElementById('spaceTitleBtn');
   if (titleBtn) {
     titleBtn.onclick = openSpaceSheet;
+    titleBtn.style.cursor = 'pointer';
     titleBtn.innerHTML =
       '<span id="currentSpaceName">' + escapeHtml(space.name) + '</span>' +
       '<svg viewBox="0 0 24 24" fill="none">' +
         '<path d="M6 9l6 6 6-6" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"/>' +
       '</svg>';
   }
-
-  // Right icon button is active ONLY in spaces mode
   var iconBtn = document.getElementById('spaceIconBtn');
   if (iconBtn) iconBtn.style.display = 'flex';
+}
+
+function setHeaderBrandMode() {
+  var titleBtn = document.getElementById('spaceTitleBtn');
+  if (titleBtn) {
+    titleBtn.onclick = null;
+    titleBtn.style.cursor = 'default';
+    titleBtn.innerHTML = '<span id="currentSpaceName">JAGA.CHAT</span>';
+  }
+  var iconBtn = document.getElementById('spaceIconBtn');
+  if (iconBtn) iconBtn.style.display = 'none';
+}
+
+/* -------------------------------------------------------
+   Mode 1: Classic Isolated Spaces with Bottom Sheet
+   ------------------------------------------------------- */
+
+function renderSpacesMode() {
+  var space = getCurrentSpace();
+
+  setHeaderSpacesMode(space);
 
   var sectionTitle = document.querySelector('.section-title');
   if (sectionTitle) {
@@ -88,19 +111,12 @@ function renderSpacesMode() {
   renderChannelCards(space);
 }
 
-/**
- * Render Mode 2: Accordion (All spaces & channels in single list).
- */
-function renderAccordionMode() {
-  var titleBtn = document.getElementById('spaceTitleBtn');
-  if (titleBtn) {
-    titleBtn.onclick = null;
-    titleBtn.innerHTML = '<span id="currentSpaceName">JAGA.CHAT</span>';
-  }
+/* -------------------------------------------------------
+   Mode 2: Accordion (All spaces & channels in single list)
+   ------------------------------------------------------- */
 
-  // Hide space switcher icon in accordion mode
-  var iconBtn = document.getElementById('spaceIconBtn');
-  if (iconBtn) iconBtn.style.display = 'none';
+function renderAccordionMode() {
+  setHeaderBrandMode();
 
   var sectionTitle = document.querySelector('.section-title');
   if (sectionTitle) sectionTitle.style.display = 'none';
@@ -108,33 +124,25 @@ function renderAccordionMode() {
   renderAccordionView();
 }
 
-/**
- * Render Mode 3: Telegram-style Tabs (Folders with swipe).
- */
-function renderTabsMode() {
-  var titleBtn = document.getElementById('spaceTitleBtn');
-  if (titleBtn) {
-    titleBtn.onclick = null;
-    titleBtn.innerHTML = '<span id="currentSpaceName">JAGA.CHAT</span>';
-  }
+/* -------------------------------------------------------
+   Mode 3: Telegram-style Tabs (Folders with swipe)
+   ------------------------------------------------------- */
 
-  // Hide space switcher icon in tabs mode
-  var iconBtn = document.getElementById('spaceIconBtn');
-  if (iconBtn) iconBtn.style.display = 'none';
+function renderTabsMode() {
+  setHeaderBrandMode();
 
   var sectionTitle = document.querySelector('.section-title');
   if (sectionTitle) sectionTitle.style.display = 'none';
 
-  var totalUnread = getTotalUnreadCount();
-  var container = document.getElementById('channelsListContainer');
-  container.innerHTML = '';
-
-  // Render Horizontal Tabs Bar
+  // Render tabs bar into sticky nav area (not scrollable)
+  var navContainer = document.getElementById('modeNavContainer');
   var tabsWrap = document.createElement('div');
   tabsWrap.className = 'folder-tabs-wrap';
 
   var tabsBar = document.createElement('div');
   tabsBar.className = 'folder-tabs';
+
+  var totalUnread = getTotalUnreadCount();
 
   // Tab 1: "Все"
   var allTab = document.createElement('button');
@@ -161,92 +169,51 @@ function renderTabsMode() {
   });
 
   tabsWrap.appendChild(tabsBar);
-  container.appendChild(tabsWrap);
+  navContainer.appendChild(tabsWrap);
 
-  // Content for active tab
-  var contentDiv = document.createElement('div');
-  contentDiv.style.display = 'flex';
-  contentDiv.style.flexDirection = 'column';
-  contentDiv.style.gap = '10px';
+  // Scroll active tab into view
+  setTimeout(function() {
+    var activeEl = tabsBar.querySelector('.folder-tab.active');
+    if (activeEl) activeEl.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+  }, 10);
+
+  // Render channel cards content
+  renderTabsContent();
+}
+
+function renderTabsContent() {
+  var container = document.getElementById('channelsListContainer');
+  container.innerHTML = '';
 
   if (activeTabId === 'all') {
     SPACES_DATA.forEach(function(sp) {
       sp.channels.forEach(function(ch) {
-        var card = document.createElement('div');
-        card.className = 'channel-card';
-        card.onclick = function() { openChat(ch.id); };
-
-        var iconSvg = ICONS[ch.iconType] || ICONS.chat;
-
-        card.innerHTML =
-          '<div class="channel-icon-box" style="background:' + ch.iconBg + ';color:' + ch.iconColor + '">' +
-            iconSvg +
-          '</div>' +
-          '<div class="channel-info">' +
-            '<span class="channel-guru-tag">' + sp.icon + ' ' + escapeHtml(sp.name) + '</span>' +
-            '<div class="channel-title">' + escapeHtml(ch.name) + '</div>' +
-            '<div class="channel-preview">' + escapeHtml(ch.lastSender) + ': ' + escapeHtml(ch.lastText) + '</div>' +
-          '</div>' +
-          '<div class="channel-meta">' +
-            '<div class="channel-time">' + escapeHtml(ch.time) + '</div>' +
-            (ch.unread > 0 ? '<div class="channel-unread">' + ch.unread + '</div>' : '') +
-          '</div>';
-
-        contentDiv.appendChild(card);
+        var card = createChannelCard(ch, sp);
+        container.appendChild(card);
       });
     });
   } else {
     var targetSpace = SPACES_DATA.find(function(s) { return s.id === activeTabId; });
     if (targetSpace) {
       targetSpace.channels.forEach(function(ch) {
-        var card = document.createElement('div');
-        card.className = 'channel-card';
-        card.onclick = function() { openChat(ch.id); };
-
-        var iconSvg = ICONS[ch.iconType] || ICONS.chat;
-
-        card.innerHTML =
-          '<div class="channel-icon-box" style="background:' + ch.iconBg + ';color:' + ch.iconColor + '">' +
-            iconSvg +
-          '</div>' +
-          '<div class="channel-info">' +
-            '<div class="channel-title">' + escapeHtml(ch.name) + '</div>' +
-            '<div class="channel-preview">' + escapeHtml(ch.lastSender) + ': ' + escapeHtml(ch.lastText) + '</div>' +
-          '</div>' +
-          '<div class="channel-meta">' +
-            '<div class="channel-time">' + escapeHtml(ch.time) + '</div>' +
-            (ch.unread > 0 ? '<div class="channel-unread">' + ch.unread + '</div>' : '') +
-          '</div>';
-
-        contentDiv.appendChild(card);
+        container.appendChild(createChannelCard(ch, null));
       });
     }
   }
-
-  container.appendChild(contentDiv);
 }
 
-/**
- * Render Mode 4: Avatar / Stories Rail (1-tap avatar switching).
- */
-function renderStoriesMode() {
-  var titleBtn = document.getElementById('spaceTitleBtn');
-  if (titleBtn) {
-    titleBtn.onclick = null;
-    titleBtn.innerHTML = '<span id="currentSpaceName">JAGA.CHAT</span>';
-  }
+/* -------------------------------------------------------
+   Mode 4: Avatar / Stories Rail (1-tap avatar switching)
+   ------------------------------------------------------- */
 
-  // Hide space switcher icon in stories mode
-  var iconBtn = document.getElementById('spaceIconBtn');
-  if (iconBtn) iconBtn.style.display = 'none';
+function renderStoriesMode() {
+  setHeaderBrandMode();
 
   var sectionTitle = document.querySelector('.section-title');
   if (sectionTitle) sectionTitle.style.display = 'none';
 
-  var container = document.getElementById('channelsListContainer');
-  container.innerHTML = '';
-
-  // Render Horizontal Avatar Rail
+  // Render avatar rail into sticky nav area
+  var navContainer = document.getElementById('modeNavContainer');
   var railWrap = document.createElement('div');
   railWrap.className = 'avatar-rail-wrap';
 
@@ -274,45 +241,29 @@ function renderStoriesMode() {
   });
 
   railWrap.appendChild(rail);
-  container.appendChild(railWrap);
+  navContainer.appendChild(railWrap);
+
+  // Scroll active avatar into view
+  setTimeout(function() {
+    var activeEl = rail.querySelector('.avatar-item.active');
+    if (activeEl) activeEl.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+  }, 10);
 
   // Channels of currently selected avatar
   var currentAvatarSpace = SPACES_DATA.find(function(s) { return s.id === activeAvatarId; }) || SPACES_DATA[0];
 
-  var contentDiv = document.createElement('div');
-  contentDiv.style.display = 'flex';
-  contentDiv.style.flexDirection = 'column';
-  contentDiv.style.gap = '10px';
+  var container = document.getElementById('channelsListContainer');
+  container.innerHTML = '';
 
   currentAvatarSpace.channels.forEach(function(ch) {
-    var card = document.createElement('div');
-    card.className = 'channel-card';
-    card.onclick = function() { openChat(ch.id); };
-
-    var iconSvg = ICONS[ch.iconType] || ICONS.chat;
-
-    card.innerHTML =
-      '<div class="channel-icon-box" style="background:' + ch.iconBg + ';color:' + ch.iconColor + '">' +
-        iconSvg +
-      '</div>' +
-      '<div class="channel-info">' +
-        '<div class="channel-title">' + escapeHtml(ch.name) + '</div>' +
-        '<div class="channel-preview">' + escapeHtml(ch.lastSender) + ': ' + escapeHtml(ch.lastText) + '</div>' +
-      '</div>' +
-      '<div class="channel-meta">' +
-        '<div class="channel-time">' + escapeHtml(ch.time) + '</div>' +
-        (ch.unread > 0 ? '<div class="channel-unread">' + ch.unread + '</div>' : '') +
-      '</div>';
-
-    contentDiv.appendChild(card);
+    container.appendChild(createChannelCard(ch, null));
   });
-
-  container.appendChild(contentDiv);
 }
 
-/**
- * Render all spaces and their channels as accordion sections.
- */
+/* -------------------------------------------------------
+   Accordion View Renderer & Toggle
+   ------------------------------------------------------- */
+
 function renderAccordionView() {
   var container = document.getElementById('channelsListContainer');
   container.innerHTML = '';
@@ -321,73 +272,112 @@ function renderAccordionView() {
   wrap.className = 'accordion-container';
 
   SPACES_DATA.forEach(function(sp) {
-    var isCollapsed = Boolean(collapsedSpaces[sp.id]);
-    var spaceUnread = getSpaceUnreadCount(sp.id);
-
-    var section = document.createElement('div');
-    section.className = 'accordion-section' +
-      (sp.isSystem ? ' system-level' : '') +
-      (isCollapsed ? ' collapsed' : '');
-
-    var tagHtml = sp.isSystem ? '<span class="system-tag">Главное</span>' : '';
-
-    var header = document.createElement('div');
-    header.className = 'accordion-header';
-    header.onclick = function() { toggleSpaceAccordion(sp.id); };
-
-    header.innerHTML =
-      '<div class="accordion-icon">' + sp.icon + '</div>' +
-      '<div class="accordion-info">' +
-        '<div class="accordion-title">' + escapeHtml(sp.name) + ' ' + tagHtml + '</div>' +
-        '<div class="accordion-subtitle">' + escapeHtml(sp.subtitle) + '</div>' +
-      '</div>' +
-      '<div class="accordion-trailing">' +
-        (spaceUnread > 0
-          ? '<div class="accordion-unread">' + spaceUnread + '</div>'
-          : '') +
-        '<svg class="accordion-chevron" viewBox="0 0 24 24" fill="none">' +
-          '<path d="M6 9l6 6 6-6" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/>' +
-        '</svg>' +
-      '</div>';
-
-    section.appendChild(header);
-
-    var channelsDiv = document.createElement('div');
-    channelsDiv.className = 'accordion-channels';
-
-    sp.channels.forEach(function(ch) {
-      var card = document.createElement('div');
-      card.className = 'accordion-channel-card';
-      card.onclick = function(e) {
-        e.stopPropagation();
-        openChat(ch.id);
-      };
-
-      var iconSvg = ICONS[ch.iconType] || ICONS.chat;
-
-      card.innerHTML =
-        '<div class="accordion-channel-icon" style="background:' + ch.iconBg + ';color:' + ch.iconColor + '">' +
-          iconSvg +
-        '</div>' +
-        '<div class="accordion-channel-info">' +
-          '<div class="accordion-channel-title">' + escapeHtml(ch.name) + '</div>' +
-          '<div class="accordion-channel-preview">' + escapeHtml(ch.lastSender) + ': ' + escapeHtml(ch.lastText) + '</div>' +
-        '</div>' +
-        '<div class="accordion-channel-meta">' +
-          '<div class="accordion-channel-time">' + escapeHtml(ch.time) + '</div>' +
-          (ch.unread > 0
-            ? '<div class="accordion-channel-unread">' + ch.unread + '</div>'
-            : '') +
-        '</div>';
-
-      channelsDiv.appendChild(card);
-    });
-
-    section.appendChild(channelsDiv);
-    wrap.appendChild(section);
+    wrap.appendChild(createAccordionSection(sp));
   });
 
   container.appendChild(wrap);
+}
+
+function createAccordionSection(sp) {
+  var isCollapsed = Boolean(collapsedSpaces[sp.id]);
+  var spaceUnread = getSpaceUnreadCount(sp.id);
+
+  var section = document.createElement('div');
+  section.className = 'accordion-section' +
+    (sp.isSystem ? ' system-level' : '') +
+    (isCollapsed ? ' collapsed' : '');
+  section.setAttribute('data-space-id', sp.id);
+
+  var tagHtml = sp.isSystem ? '<span class="system-tag">Главное</span>' : '';
+
+  var header = document.createElement('div');
+  header.className = 'accordion-header';
+  header.onclick = function() { toggleSpaceAccordion(sp.id); };
+
+  header.innerHTML =
+    '<div class="accordion-icon">' + sp.icon + '</div>' +
+    '<div class="accordion-info">' +
+      '<div class="accordion-title">' + escapeHtml(sp.name) + ' ' + tagHtml + '</div>' +
+      '<div class="accordion-subtitle">' + escapeHtml(sp.subtitle) + '</div>' +
+    '</div>' +
+    '<div class="accordion-trailing">' +
+      (spaceUnread > 0
+        ? '<div class="accordion-unread">' + spaceUnread + '</div>'
+        : '') +
+      '<svg class="accordion-chevron" viewBox="0 0 24 24" fill="none">' +
+        '<path d="M6 9l6 6 6-6" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/>' +
+      '</svg>' +
+    '</div>';
+
+  section.appendChild(header);
+
+  var channelsDiv = document.createElement('div');
+  channelsDiv.className = 'accordion-channels';
+
+  sp.channels.forEach(function(ch) {
+    var card = document.createElement('div');
+    card.className = 'accordion-channel-card';
+    card.onclick = function(e) {
+      e.stopPropagation();
+      openChat(ch.id);
+    };
+
+    var iconSvg = ICONS[ch.iconType] || ICONS.chat;
+
+    card.innerHTML =
+      '<div class="accordion-channel-icon" style="background:' + ch.iconBg + ';color:' + ch.iconColor + '">' +
+        iconSvg +
+      '</div>' +
+      '<div class="accordion-channel-info">' +
+        '<div class="accordion-channel-title">' + escapeHtml(ch.name) + '</div>' +
+        '<div class="accordion-channel-preview">' + escapeHtml(ch.lastSender) + ': ' + escapeHtml(ch.lastText) + '</div>' +
+      '</div>' +
+      '<div class="accordion-channel-meta">' +
+        '<div class="accordion-channel-time">' + escapeHtml(ch.time) + '</div>' +
+        (ch.unread > 0
+          ? '<div class="accordion-channel-unread">' + ch.unread + '</div>'
+          : '') +
+      '</div>';
+
+    channelsDiv.appendChild(card);
+  });
+
+  section.appendChild(channelsDiv);
+  return section;
+}
+
+/* -------------------------------------------------------
+   Shared Channel Card Creator
+   ------------------------------------------------------- */
+
+function createChannelCard(ch, guruSpace) {
+  var card = document.createElement('div');
+  card.className = 'channel-card';
+  card.onclick = function() { openChat(ch.id); };
+
+  var iconSvg = ICONS[ch.iconType] || ICONS.chat;
+
+  var guruTagHtml = guruSpace
+    ? '<span class="channel-guru-tag">' + guruSpace.icon + ' ' + escapeHtml(guruSpace.name) + '</span>'
+    : '';
+
+  card.innerHTML =
+    '<div class="channel-icon-box" style="background:' + ch.iconBg + ';color:' + ch.iconColor + '">' +
+      iconSvg +
+    '</div>' +
+    '<div class="channel-info">' +
+      guruTagHtml +
+      '<div class="channel-title">' + escapeHtml(ch.name) + '</div>' +
+      '<div class="channel-preview">' + escapeHtml(ch.lastSender) + ': ' + escapeHtml(ch.lastText) + '</div>' +
+    '</div>' +
+    '<div class="channel-meta">' +
+      '<div class="channel-time">' + escapeHtml(ch.time) + '</div>' +
+      (ch.unread > 0
+        ? '<div class="channel-unread">' + ch.unread + '</div>'
+        : '') +
+    '</div>';
+
+  return card;
 }
 
 /**
@@ -398,34 +388,14 @@ function renderChannelCards(space) {
   container.innerHTML = '';
 
   space.channels.forEach(function(ch) {
-    var card = document.createElement('div');
-    card.className = 'channel-card';
-    card.onclick = function() { openChat(ch.id); };
-
-    var iconSvg = ICONS[ch.iconType] || ICONS.chat;
-
-    card.innerHTML =
-      '<div class="channel-icon-box" style="background:' + ch.iconBg + ';color:' + ch.iconColor + '">' +
-        iconSvg +
-      '</div>' +
-      '<div class="channel-info">' +
-        '<div class="channel-title">' + escapeHtml(ch.name) + '</div>' +
-        '<div class="channel-preview">' + escapeHtml(ch.lastSender) + ': ' + escapeHtml(ch.lastText) + '</div>' +
-      '</div>' +
-      '<div class="channel-meta">' +
-        '<div class="channel-time">' + escapeHtml(ch.time) + '</div>' +
-        (ch.unread > 0
-          ? '<div class="channel-unread">' + ch.unread + '</div>'
-          : '') +
-      '</div>';
-
-    container.appendChild(card);
+    container.appendChild(createChannelCard(ch, null));
   });
 }
 
-/**
- * Render bottom sheet space list (Section 6.2).
- */
+/* -------------------------------------------------------
+   Bottom Sheet Space List (Section 6.2)
+   ------------------------------------------------------- */
+
 function renderSpaceList() {
   var container = document.getElementById('spaceListContainer');
   if (!container) return;
@@ -467,9 +437,10 @@ function renderSpaceList() {
   });
 }
 
-/**
- * Render chat messages for a channel (Section 6.3).
- */
+/* -------------------------------------------------------
+   Chat Messages (Section 6.3)
+   ------------------------------------------------------- */
+
 function renderChatMessages(channel) {
   var area = document.getElementById('messagesArea');
   if (!area) return;

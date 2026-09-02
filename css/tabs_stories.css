@@ -1,28 +1,11 @@
 /* === Telegram-style Folders/Tabs and Avatar Rail Modes === */
 
-/* --- Mode Switcher Scrollable Enhancement --- */
-
-.mode-switcher {
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: none;
-}
-
-.mode-switcher::-webkit-scrollbar {
-  display: none;
-}
-
-.mode-btn {
-  white-space: nowrap;
-  flex: 1 0 auto;
-}
-
 /* -------------------------------------------------------
    1. Telegram-style Folders / Tabs (.folder-tabs)
    ------------------------------------------------------- */
 
 .folder-tabs-wrap {
-  padding: 4px 16px 8px 16px;
+  padding: 4px 0 8px 0;
   flex-shrink: 0;
 }
 
@@ -32,7 +15,7 @@
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
-  padding: 2px 0;
+  padding: 2px 16px;
 }
 
 .folder-tabs::-webkit-scrollbar {
@@ -104,7 +87,7 @@
    ------------------------------------------------------- */
 
 .avatar-rail-wrap {
-  padding: 4px 16px 10px 16px;
+  padding: 4px 0 10px 0;
   flex-shrink: 0;
 }
 
@@ -114,7 +97,7 @@
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
-  padding: 3px 2px;
+  padding: 3px 16px;
 }
 
 .avatar-rail::-webkit-scrollbar {
