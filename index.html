@@ -14,6 +14,7 @@
   <link rel="stylesheet" href="css/reset.css">
   <link rel="stylesheet" href="css/layout.css">
   <link rel="stylesheet" href="css/channels.css">
+  <link rel="stylesheet" href="css/accordion.css">
   <link rel="stylesheet" href="css/chat.css">
   <link rel="stylesheet" href="css/sheet.css">
   <link rel="stylesheet" href="css/animations.css">
@@ -29,13 +30,13 @@
 
       <!-- Header: space title + icon button -->
       <div class="header">
-        <button class="space-title-btn" onclick="openSpaceSheet()">
+        <button class="space-title-btn" id="spaceTitleBtn" onclick="openSpaceSheet()">
           <span id="currentSpaceName">JAGA Хаб</span>
           <svg viewBox="0 0 24 24" fill="none">
             <path d="M6 9l6 6 6-6" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"/>
           </svg>
         </button>
-        <button class="space-icon-btn" onclick="openSpaceSheet()" aria-label="Выбрать пространство">
+        <button class="space-icon-btn" id="spaceIconBtn" onclick="openSpaceSheet()" aria-label="Выбрать пространство">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
             <rect x="4" y="2" width="16" height="20" rx="2.5"/>
             <path d="M9 22v-4h6v4"/>
@@ -45,6 +46,9 @@
         </button>
       </div>
 
+      <!-- Mode Switcher (Segmented Control) -->
+      <div class="mode-switcher-wrap" id="modeSwitcherContainer"></div>
+
       <!-- Info pill -->
       <div class="info-banner-wrap">
         <div class="info-pill">
@@ -53,14 +57,14 @@
             <line x1="2" y1="12" x2="22" y2="12"/>
             <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
           </svg>
-          <span id="infoPillText">Вы просматриваете каналы пространства «Общее»</span>
+          <span id="infoPillText">Все пространства и каналы в одном месте</span>
         </div>
       </div>
 
-      <!-- Section title -->
+      <!-- Section title (shown in Spaces mode) -->
       <div class="section-title">Каналы</div>
 
-      <!-- Channel cards (rendered by JS) -->
+      <!-- Channel cards / Accordion container -->
       <div class="channels-scroll" id="channelsListContainer"></div>
 
       <!-- Bottom tab bar (Section 6.1: Чаты, Люди, Уведомления, Профиль) -->

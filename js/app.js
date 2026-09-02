@@ -2,6 +2,27 @@
 /* Depends on: data.js, state.js, render.js, animations.js */
 
 /* -------------------------------------------------------
+   View Mode Switching (Spaces vs Accordion)
+   ------------------------------------------------------- */
+
+function setViewMode(mode) {
+  if (currentViewMode === mode) return;
+  currentViewMode = mode;
+  try {
+    localStorage.setItem('jaga_view_mode', mode);
+  } catch (e) {}
+
+  animateChannelSwitch(function() {
+    renderApp();
+  });
+}
+
+function toggleSpaceAccordion(spaceId) {
+  collapsedSpaces[spaceId] = !collapsedSpaces[spaceId];
+  renderAccordionView();
+}
+
+/* -------------------------------------------------------
    Bottom Sheet (Flow 3)
    ------------------------------------------------------- */
 
@@ -36,9 +57,12 @@ function selectSpace(spaceId) {
 
 function openChat(channelId) {
   currentChannelId = channelId;
-  var space = getCurrentSpace();
-  var channel = space.channels.find(function(c) { return c.id === channelId; });
-  if (!channel) return;
+  var lookup = findChannelGlobally(channelId);
+  if (!lookup) return;
+
+  var space = lookup.space;
+  var channel = lookup.channel;
+  currentSpaceId = space.id;
 
   // Clear unread for this channel
   channel.unread = 0;
@@ -61,7 +85,7 @@ function openChat(channelId) {
     if (area) area.scrollTop = area.scrollHeight;
   }, 50);
 
-  // Section 11: trigger demo scenario when in Бхакти-санга
+  // Section 11: trigger demo scenario when in Бхакти-санга (Бхакти Вигьяна Госвами)
   scheduleDemoMessage();
 }
 
@@ -95,9 +119,10 @@ function sendChatMessage() {
   var text = input.value.trim();
   if (!text || !currentChannelId) return;
 
-  var space = getCurrentSpace();
-  var channel = space.channels.find(function(c) { return c.id === currentChannelId; });
-  if (!channel) return;
+  var lookup = findChannelGlobally(currentChannelId);
+  if (!lookup) return;
+
+  var channel = lookup.channel;
 
   var now = new Date();
   var timeStr =
@@ -165,10 +190,10 @@ function scheduleDemoMessage() {
 
     // Update external badge with animation
     var badge = document.getElementById('externalBadge');
-    var extUnread = getExternalUnreadCount();
-    if (extUnread > 0) {
+    var unreadCount = (currentViewMode === 'accordion') ? getTotalUnreadCount() : getExternalUnreadCount();
+    if (unreadCount > 0 && badge) {
       badge.style.display = 'flex';
-      badge.textContent = extUnread;
+      badge.textContent = unreadCount;
       pulseBadge(badge);
     }
   }, 4000);
@@ -179,5 +204,12 @@ function scheduleDemoMessage() {
    ------------------------------------------------------- */
 
 window.addEventListener('DOMContentLoaded', function() {
+  try {
+    var savedMode = localStorage.getItem('jaga_view_mode');
+    if (savedMode === 'spaces' || savedMode === 'accordion') {
+      currentViewMode = savedMode;
+    }
+  } catch (e) {}
+
   renderApp();
 });

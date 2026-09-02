@@ -5,6 +5,10 @@ var currentChannelId = null;
 var demoTriggered = false;
 var demoTimer = null;
 
+// View Mode: 'spaces' (classic with bottom sheet) | 'accordion' (unified list)
+var currentViewMode = 'accordion';
+var collapsedSpaces = {}; // spaceId -> boolean (true = collapsed)
+
 function getCurrentSpace() {
   return SPACES_DATA.find(function(s) { return s.id === currentSpaceId; }) || SPACES_DATA[0];
 }
@@ -25,6 +29,16 @@ function getExternalUnreadCount() {
         count += (c.unread || 0);
       });
     }
+  });
+  return count;
+}
+
+function getTotalUnreadCount() {
+  var count = 0;
+  SPACES_DATA.forEach(function(s) {
+    s.channels.forEach(function(c) {
+      count += (c.unread || 0);
+    });
   });
   return count;
 }

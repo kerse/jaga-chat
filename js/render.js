@@ -1,19 +1,91 @@
 /* === DOM Rendering (depends on state.js, data.js) === */
 
 /**
- * Main render: header, info pill, badge, channel cards.
+ * Main render function.
  */
 function renderApp() {
+  renderModeSwitcher();
+
+  if (currentViewMode === 'accordion') {
+    renderAccordionMode();
+  } else {
+    renderSpacesMode();
+  }
+
+  // Bottom sheet sync
+  renderSpaceList();
+}
+
+/**
+ * Render Mode Switcher (Segmented Control).
+ */
+function renderModeSwitcher() {
+  var container = document.getElementById('modeSwitcherContainer');
+  if (!container) return;
+
+  var isSpaces = currentViewMode === 'spaces';
+  var isAccordion = currentViewMode === 'accordion';
+
+  container.innerHTML =
+    '<div class="mode-switcher">' +
+      '<button class="mode-btn ' + (isSpaces ? 'active' : '') + '" onclick="setViewMode(\'spaces\')">' +
+        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">' +
+          '<rect x="3" y="3" width="7" height="7"></rect>' +
+          '<rect x="14" y="3" width="7" height="7"></rect>' +
+          '<rect x="14" y="14" width="7" height="7"></rect>' +
+          '<rect x="3" y="14" width="7" height="7"></rect>' +
+        '</svg>' +
+        '<span>Пространства</span>' +
+      '</button>' +
+      '<button class="mode-btn ' + (isAccordion ? 'active' : '') + '" onclick="setViewMode(\'accordion\')">' +
+        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">' +
+          '<line x1="8" y1="6" x2="21" y2="6"></line>' +
+          '<line x1="8" y1="12" x2="21" y2="12"></line>' +
+          '<line x1="8" y1="18" x2="21" y2="18"></line>' +
+          '<line x1="3" y1="6" x2="3.01" y2="6"></line>' +
+          '<line x1="3" y1="12" x2="3.01" y2="12"></line>' +
+          '<line x1="3" y1="18" x2="3.01" y2="18"></line>' +
+        '</svg>' +
+        '<span>Аккордеон</span>' +
+      '</button>' +
+    '</div>';
+}
+
+/**
+ * Render Mode 1: Classic Isolated Spaces with Bottom Sheet.
+ */
+function renderSpacesMode() {
   var space = getCurrentSpace();
 
-  // Header title
-  document.getElementById('currentSpaceName').textContent = space.name;
+  // Header title & chevron
+  var titleBtn = document.getElementById('spaceTitleBtn');
+  if (titleBtn) {
+    titleBtn.onclick = openSpaceSheet;
+    titleBtn.innerHTML =
+      '<span id="currentSpaceName">' + escapeHtml(space.name) + '</span>' +
+      '<svg viewBox="0 0 24 24" fill="none">' +
+        '<path d="M6 9l6 6 6-6" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"/>' +
+      '</svg>';
+  }
+
+  // Header icon button
+  var iconBtn = document.getElementById('spaceIconBtn');
+  if (iconBtn) iconBtn.style.display = 'flex';
 
   // Info pill
+  var infoWrap = document.querySelector('.info-banner-wrap');
+  if (infoWrap) infoWrap.style.display = 'block';
   document.getElementById('infoPillText').textContent =
     'Вы просматриваете каналы пространства «' + space.name + '»';
 
-  // External unread badge (Section 6.4)
+  // Section title
+  var sectionTitle = document.querySelector('.section-title');
+  if (sectionTitle) {
+    sectionTitle.style.display = 'block';
+    sectionTitle.textContent = 'Каналы';
+  }
+
+  // External unread badge (sum in other spaces)
   var extUnread = getExternalUnreadCount();
   var badge = document.getElementById('externalBadge');
   if (extUnread > 0) {
@@ -23,15 +95,133 @@ function renderApp() {
     badge.style.display = 'none';
   }
 
-  // Channel cards
+  // Channel cards for current space
   renderChannelCards(space);
-
-  // Space list (keep in sync if sheet is open)
-  renderSpaceList();
 }
 
 /**
- * Render channel cards for a given space.
+ * Render Mode 2: Accordion (All spaces & channels in single list).
+ */
+function renderAccordionMode() {
+  // Header title
+  var titleBtn = document.getElementById('spaceTitleBtn');
+  if (titleBtn) {
+    titleBtn.onclick = null; // No need for bottom sheet in accordion mode
+    titleBtn.innerHTML =
+      '<span id="currentSpaceName">JAGA.CHAT</span>';
+  }
+
+  // Header icon button shows total unreads
+  var iconBtn = document.getElementById('spaceIconBtn');
+  if (iconBtn) iconBtn.style.display = 'flex';
+
+  var totalUnread = getTotalUnreadCount();
+  var badge = document.getElementById('externalBadge');
+  if (totalUnread > 0) {
+    badge.style.display = 'flex';
+    badge.textContent = totalUnread;
+  } else {
+    badge.style.display = 'none';
+  }
+
+  // Info pill
+  var infoWrap = document.querySelector('.info-banner-wrap');
+  if (infoWrap) infoWrap.style.display = 'block';
+  document.getElementById('infoPillText').textContent =
+    'Все пространства и каналы в одном месте';
+
+  // Hide standalone section title (each accordion card has its header)
+  var sectionTitle = document.querySelector('.section-title');
+  if (sectionTitle) sectionTitle.style.display = 'none';
+
+  // Render accordion container
+  renderAccordionView();
+}
+
+/**
+ * Render all spaces and their channels as accordion sections.
+ */
+function renderAccordionView() {
+  var container = document.getElementById('channelsListContainer');
+  container.innerHTML = '';
+
+  var wrap = document.createElement('div');
+  wrap.className = 'accordion-container';
+
+  SPACES_DATA.forEach(function(sp) {
+    var isCollapsed = Boolean(collapsedSpaces[sp.id]);
+    var spaceUnread = getSpaceUnreadCount(sp.id);
+
+    var section = document.createElement('div');
+    section.className = 'accordion-section' +
+      (sp.isSystem ? ' system-level' : '') +
+      (isCollapsed ? ' collapsed' : '');
+
+    var tagHtml = sp.isSystem ? '<span class="system-tag">Главное</span>' : '';
+
+    // Accordion Header
+    var header = document.createElement('div');
+    header.className = 'accordion-header';
+    header.onclick = function() { toggleSpaceAccordion(sp.id); };
+
+    header.innerHTML =
+      '<div class="accordion-icon">' + sp.icon + '</div>' +
+      '<div class="accordion-info">' +
+        '<div class="accordion-title">' + escapeHtml(sp.name) + ' ' + tagHtml + '</div>' +
+        '<div class="accordion-subtitle">' + escapeHtml(sp.subtitle) + '</div>' +
+      '</div>' +
+      '<div class="accordion-trailing">' +
+        (spaceUnread > 0
+          ? '<div class="accordion-unread">' + spaceUnread + '</div>'
+          : '') +
+        '<svg class="accordion-chevron" viewBox="0 0 24 24" fill="none">' +
+          '<path d="M6 9l6 6 6-6" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/>' +
+        '</svg>' +
+      '</div>';
+
+    section.appendChild(header);
+
+    // Accordion Channels List
+    var channelsDiv = document.createElement('div');
+    channelsDiv.className = 'accordion-channels';
+
+    sp.channels.forEach(function(ch) {
+      var card = document.createElement('div');
+      card.className = 'accordion-channel-card';
+      card.onclick = function(e) {
+        e.stopPropagation();
+        openChat(ch.id);
+      };
+
+      var iconSvg = ICONS[ch.iconType] || ICONS.chat;
+
+      card.innerHTML =
+        '<div class="accordion-channel-icon" style="background:' + ch.iconBg + ';color:' + ch.iconColor + '">' +
+          iconSvg +
+        '</div>' +
+        '<div class="accordion-channel-info">' +
+          '<div class="accordion-channel-title">' + escapeHtml(ch.name) + '</div>' +
+          '<div class="accordion-channel-preview">' + escapeHtml(ch.lastSender) + ': ' + escapeHtml(ch.lastText) + '</div>' +
+        '</div>' +
+        '<div class="accordion-channel-meta">' +
+          '<div class="accordion-channel-time">' + escapeHtml(ch.time) + '</div>' +
+          (ch.unread > 0
+            ? '<div class="accordion-channel-unread">' + ch.unread + '</div>'
+            : '') +
+        '</div>';
+
+      channelsDiv.appendChild(card);
+    });
+
+    section.appendChild(channelsDiv);
+    wrap.appendChild(section);
+  });
+
+  container.appendChild(wrap);
+}
+
+/**
+ * Render channel cards for a given space (Spaces mode).
  */
 function renderChannelCards(space) {
   var container = document.getElementById('channelsListContainer');
@@ -68,6 +258,7 @@ function renderChannelCards(space) {
  */
 function renderSpaceList() {
   var container = document.getElementById('spaceListContainer');
+  if (!container) return;
   container.innerHTML = '';
 
   SPACES_DATA.forEach(function(sp, idx) {
